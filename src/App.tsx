@@ -5,7 +5,13 @@ import { FiEdit } from "react-icons/fi";
 import { AiOutlineDelete } from "react-icons/ai";
 import { TfiComments } from "react-icons/tfi";
 import { useDispatch } from "react-redux";
-import { addOrder, deleteOrder, editOrder } from "./store/slice/orderSlice";
+import {
+  addOrder,
+  deleteOrder,
+  editOrder,
+  saveOrdersToLocalStorage,
+  saveState,
+} from "./store/slice/orderSlice";
 import { useSelector } from "react-redux";
 import { RootState } from "./store/store";
 
@@ -27,20 +33,24 @@ const App: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
-  const id: number = orders.length + 1;
-  const [newOrder, setNewOrder] = useState<Order>(() => ({
-    id: id,
-    date: "",
-    client: "",
-    carrier: "",
-    phone: "",
-    comments: "",
-    status: "новый",
-    atiCode: "",
-  }));
-  const [creatingOrder, setCreatingOrder] = useState<boolean>(false);
+  const [date, setDate] = useState<string>("");
+  const [client, setClient] = useState<string>("");
+  const [carrier, setCarrier] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [comment, setComment] = useState<string>("");
+  const [status, setStatus] = useState<string>("новый");
+  const [atiCode, setAtiCode] = useState<string>("");
+  const [openModal, setOpenModal] = useState<boolean>(false);
 
   useEffect(() => {
+    const storedOrders = localStorage.getItem("ordersState");
+    if (storedOrders) {
+      dispatch(saveOrdersToLocalStorage(JSON.parse(storedOrders)));
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(saveOrdersToLocalStorage());
     setFilteredOrders(orders);
   }, [orders]);
 
@@ -64,11 +74,6 @@ const App: React.FC = () => {
     setFilteredOrders(filtered);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewOrder({ ...newOrder, [name]: value });
-  };
-
   const handleDelete = (id: number) => {
     dispatch(deleteOrder(id));
   };
@@ -78,9 +83,34 @@ const App: React.FC = () => {
   };
 
   const handleCreate = () => {
-    dispatch(addOrder(newOrder));
-    setCreatingOrder(true);
-    setNewOrder(newOrder);
+    const newId = orders.length + 1;
+    const orderToAdd: Order = {
+      id: newId,
+      date,
+      client,
+      carrier,
+      phone,
+      comments: comment,
+      status,
+      atiCode,
+    };
+    dispatch(addOrder(orderToAdd));
+    handleOpenModal();
+    setFilteredOrders([...filteredOrders, orderToAdd]);
+    setDate("");
+    setCarrier("");
+    setClient("");
+    setPhone("");
+    setComment("");
+    setAtiCode("");
+    handleCloseModal();
+  };
+  const handleOpenModal = () => {
+    setOpenModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
   };
 
   return (
@@ -117,11 +147,11 @@ const App: React.FC = () => {
             <option value="завершено">Завершено</option>
           </select>
           {isAdminMode && (
-            <button className="content-box-btn" onClick={handleCreate}>
+            <button className="content-box-btn" onClick={handleOpenModal}>
               Создать заказ
             </button>
           )}
-          {creatingOrder && (
+          {openModal && (
             <div className="modal-overlay">
               <div className="modal">
                 <h2>Создание нового заказа</h2>
@@ -131,8 +161,8 @@ const App: React.FC = () => {
                     className="modal-input"
                     type="date"
                     name="date"
-                    value={newOrder.date}
-                    onChange={handleInputChange}
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
                   />
                 </label>
                 <label className="modal-label">
@@ -141,8 +171,8 @@ const App: React.FC = () => {
                     className="modal-input"
                     type="text"
                     name="client"
-                    value={newOrder.client}
-                    onChange={handleInputChange}
+                    value={client}
+                    onChange={(e) => setClient(e.target.value)}
                   />
                 </label>
                 <label className="modal-label">
@@ -151,8 +181,8 @@ const App: React.FC = () => {
                     className="modal-input"
                     type="text"
                     name="carrier"
-                    value={newOrder.carrier}
-                    onChange={handleInputChange}
+                    value={carrier}
+                    onChange={(e) => setCarrier(e.target.value)}
                   />
                 </label>
                 <label className="modal-label">
@@ -161,8 +191,8 @@ const App: React.FC = () => {
                     className="modal-input"
                     type="phone"
                     name="phone"
-                    value={newOrder.phone}
-                    onChange={handleInputChange}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                   />
                 </label>
                 <label className="modal-label">
@@ -171,8 +201,8 @@ const App: React.FC = () => {
                     className="modal-input"
                     type="text"
                     name="status"
-                    value={newOrder.status}
-                    onChange={handleInputChange}
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
                   />
                 </label>
                 <label className="modal-label">
@@ -181,8 +211,8 @@ const App: React.FC = () => {
                     className="modal-input"
                     type="text"
                     name="atiCode"
-                    value={newOrder.atiCode}
-                    onChange={handleInputChange}
+                    value={atiCode}
+                    onChange={(e) => setAtiCode(e.target.value)}
                   />
                 </label>
                 <label className="modal-label">
@@ -191,18 +221,15 @@ const App: React.FC = () => {
                     className="modal-input"
                     type="text"
                     name="comments"
-                    value={newOrder.comments}
-                    onChange={handleInputChange}
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
                   />
                 </label>
                 <div className="modal-box-btn">
                   <button className="modal-button" onClick={handleCreate}>
                     Создать заказ
                   </button>
-                  <button
-                    className="modal-button"
-                    onClick={() => setCreatingOrder(false)}
-                  >
+                  <button className="modal-button" onClick={handleCloseModal}>
                     Отмена
                   </button>
                 </div>
@@ -243,11 +270,11 @@ const App: React.FC = () => {
                 </td>
                 {isAdminMode && (
                   <td className="td-actions">
-                    <FiEdit onClick={(id) => handleEdit} />
-                    <AiOutlineDelete onClick={(id) => handleDelete} />
+                    <FiEdit onClick={() => handleEdit(order)} />
+                    <AiOutlineDelete onClick={() => handleDelete(order.id)} />
                     <div className="tooltip-container">
                       {order.comments.length === 0 ? (
-                        <span className="tooltip-text">Нет описания</span>
+                        <span className="tooltip-text">Нет комментария</span>
                       ) : (
                         <span className="tooltip-text">{order.comments}</span>
                       )}
