@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ordersData } from "./mocks";
 import "./App.css";
 import { FiEdit } from "react-icons/fi";
 import { AiOutlineDelete } from "react-icons/ai";
 import { TfiComments } from "react-icons/tfi";
 import { useDispatch } from "react-redux";
+import { addOrder, deleteOrder, editOrder } from "./store/slice/orderSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "./store/store";
 
 export interface Order {
   id: number;
@@ -18,15 +21,15 @@ export interface Order {
 }
 
 const App: React.FC = () => {
-  //const orders = useSelector((state: any) => state.orders);
   const dispatch = useDispatch();
-  const [orders, setOrders] = useState<Order[]>(ordersData);
+  const orders = useSelector((state: RootState) => state.orders);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>(orders);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
-  const [newOrder, setNewOrder] = useState<Order>({
-    id: 0,
+  const id: number = orders.length + 1;
+  const [newOrder, setNewOrder] = useState<Order>(() => ({
+    id: id,
     date: "",
     client: "",
     carrier: "",
@@ -34,8 +37,12 @@ const App: React.FC = () => {
     comments: "",
     status: "новый",
     atiCode: "",
-  });
+  }));
   const [creatingOrder, setCreatingOrder] = useState<boolean>(false);
+
+  useEffect(() => {
+    setFilteredOrders(orders);
+  }, [orders]);
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -62,26 +69,18 @@ const App: React.FC = () => {
     setNewOrder({ ...newOrder, [name]: value });
   };
 
-  const handleDelete = (id: number) => {};
+  const handleDelete = (id: number) => {
+    dispatch(deleteOrder(id));
+  };
 
-  const handleEdit = (id: number) => {};
+  const handleEdit = (editedOrder: Order) => {
+    dispatch(editOrder(editedOrder));
+  };
 
   const handleCreate = () => {
-    const id = orders.length + 1;
-    const orderToAdd: Order = { ...newOrder, id };
+    dispatch(addOrder(newOrder));
     setCreatingOrder(true);
-    setOrders([...orders, orderToAdd]);
-    setNewOrder({
-      id: 0,
-      date: "",
-      client: "",
-      carrier: "",
-      phone: "",
-      comments: "",
-      status: "новый",
-      atiCode: "",
-    });
-    setCreatingOrder(false);
+    setNewOrder(newOrder);
   };
 
   return (
@@ -225,7 +224,7 @@ const App: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map((order) => (
+            {filteredOrders.map((order, id) => (
               <tr key={order.id}>
                 <td>{order.id}</td>
                 <td>{order.date}</td>
