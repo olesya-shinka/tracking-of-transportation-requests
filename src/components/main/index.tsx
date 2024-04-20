@@ -138,7 +138,7 @@ function Main() {
       </div>
       <div className="content">
         <h1>
-          ЗАКАЗЫ <span>{filteredOrders.length}</span>
+          ЗАЯВКИ <span>{filteredOrders.length}</span>
         </h1>
         <div className="content-box">
           <input
@@ -163,7 +163,7 @@ function Main() {
               checked={hideCompleted}
               onChange={handleHideCompletedChange}
             />
-            Скрыть завершенные заказы
+            Скрыть завершенные заявки
           </label>
           {isAdminMode && (
             <button className="content-box-btn" onClick={handleOpenModal}>
@@ -214,7 +214,10 @@ function Main() {
                 </td>
                 {isAdminMode && (
                   <td className="td-actions">
-                    <FiEdit onClick={() => handleOpenModalEdit(order)} />
+                    <FiEdit
+                      onClick={() => handleOpenModalEdit(order)}
+                      style={{ cursor: "pointer" }}
+                    />
                     {openModalEdit && selectedOrder && (
                       <ModalEdit
                         handleCloseModalEdit={handleCloseModalEdit}
@@ -222,7 +225,10 @@ function Main() {
                         order={selectedOrder}
                       />
                     )}
-                    <AiOutlineDelete onClick={() => handleDelete(order.id)} />
+                    <AiOutlineDelete
+                      onClick={() => handleDelete(order.id)}
+                      style={{ cursor: "pointer" }}
+                    />
                     <div className="tooltip-container">
                       {order.comments.length === 0 ? (
                         <span className="tooltip-text">Нет комментария</span>

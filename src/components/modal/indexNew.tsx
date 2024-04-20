@@ -85,7 +85,7 @@ function ModalAdd({
   return (
     <div className="modal-overlay">
       <div className="modal">
-        <h2>Создание нового заказа</h2>
+        <h2>Создание новой заявки</h2>
         <label className="modal-label">
           Дата:
           <input

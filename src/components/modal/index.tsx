@@ -38,7 +38,7 @@ function ModalEdit({
   return (
     <div className="modal-overlay">
       <div className="modal">
-        <h2>Редактирование заказа</h2>
+        <h2>Редактирование заявки</h2>
         <label className="modal-label">
           Дата:
           <input
