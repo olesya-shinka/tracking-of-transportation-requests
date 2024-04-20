@@ -33,6 +33,18 @@ function ModalAdd({
   const orders = useSelector((state: RootState) => state.orders);
 
   const handleCreate = () => {
+    if (
+      date.length < 3 ||
+      client.length < 3 ||
+      carrier.length < 3 ||
+      phone.length < 3 ||
+      status.length < 3 ||
+      atiCode.length < 3
+    ) {
+      alert("Все поля должны содержать минимум 3 символа");
+      return;
+    }
+
     const newId = orders.length + 1;
     const orderToAdd: Order = {
       id: newId,
@@ -44,6 +56,7 @@ function ModalAdd({
       status,
       atiCode,
     };
+
     dispatch(addOrder(orderToAdd));
     handleOpenModal();
 
@@ -68,6 +81,7 @@ function ModalAdd({
     setAtiCode("");
     handleCloseModal();
   };
+
   return (
     <div className="modal-overlay">
       <div className="modal">
