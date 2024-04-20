@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { ordersData } from "./mocks";
 import "./App.css";
 import { FiEdit } from "react-icons/fi";
 import { AiOutlineDelete } from "react-icons/ai";
@@ -10,10 +9,10 @@ import {
   deleteOrder,
   editOrder,
   saveOrdersToLocalStorage,
-  saveState,
 } from "./store/slice/orderSlice";
 import { useSelector } from "react-redux";
 import { RootState } from "./store/store";
+import ModalEdit from "./components/modal";
 
 export interface Order {
   id: number;
@@ -41,6 +40,10 @@ const App: React.FC = () => {
   const [status, setStatus] = useState<string>("новый");
   const [atiCode, setAtiCode] = useState<string>("");
   const [openModal, setOpenModal] = useState<boolean>(false);
+  const [openModalEdit, setOpenModalEdit] = useState<boolean>(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [hideCompleted, setHideCompleted] = useState<boolean>(false);
+
 
   useEffect(() => {
     const storedOrders = localStorage.getItem("ordersState");
@@ -112,6 +115,14 @@ const App: React.FC = () => {
   const handleCloseModal = () => {
     setOpenModal(false);
   };
+  const handleOpenModalEdit = (order: Order) => {
+    setSelectedOrder(order);
+    setOpenModalEdit(true);
+  };
+
+  const handleCloseModalEdit = () => {
+    setOpenModalEdit(false);
+  };
 
   return (
     <div className="App">
@@ -127,11 +138,13 @@ const App: React.FC = () => {
         </label>
       </div>
       <div className="content">
-        <h1>ЗАКАЗЫ</h1>
+        <h1>
+          ЗАКАЗЫ <span>{filteredOrders.length}</span>
+        </h1>
         <div className="content-box">
           <input
             type="text"
-            placeholder="Поиск..."
+            placeholder="Поиск по клиентам"
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
             className="content-box-input"
@@ -270,7 +283,14 @@ const App: React.FC = () => {
                 </td>
                 {isAdminMode && (
                   <td className="td-actions">
-                    <FiEdit onClick={() => handleEdit(order)} />
+                    <FiEdit onClick={() => handleOpenModalEdit(order)} />
+                    {openModalEdit && selectedOrder && (
+                      <ModalEdit
+                        handleCloseModalEdit={handleCloseModalEdit}
+                        handleEdit={handleEdit}
+                        order={selectedOrder}
+                      />
+                    )}
                     <AiOutlineDelete onClick={() => handleDelete(order.id)} />
                     <div className="tooltip-container">
                       {order.comments.length === 0 ? (

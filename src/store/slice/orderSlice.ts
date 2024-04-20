@@ -18,7 +18,7 @@ export const saveState = (state: Order[]) => {
         const serializedState = JSON.stringify(state);
         localStorage.setItem("ordersState", serializedState);
     } catch {
-        // Обработка ошибок сохранения состояния
+        console.log("Error saving state")
     }
 };
 
@@ -33,25 +33,25 @@ const ordersSlice = createSlice({
         },
         addOrder(state, action: PayloadAction<Order>) {
             state.push(action.payload);
-            saveState(state); // Сохраняем состояние после каждого изменения
+            saveState(state);
         },
         editOrder(state, action: PayloadAction<Order>) {
             const index = state.findIndex((order) => order.id === action.payload.id);
             if (index !== -1) {
                 state[index] = action.payload;
-                saveState(state); // Сохраняем состояние после каждого изменения
+                saveState(state);
             }
         },
         deleteOrder(state, action: PayloadAction<number>) {
             const index = state.findIndex((order) => order.id === action.payload);
             if (index !== -1) {
                 state.splice(index, 1);
-                saveState(state); // Сохраняем состояние после каждого изменения
+                saveState(state);
             }
         },
     },
 });
 
-export const { addOrder, editOrder, deleteOrder,saveOrdersToLocalStorage } = ordersSlice.actions;
+export const { addOrder, editOrder, deleteOrder, saveOrdersToLocalStorage } = ordersSlice.actions;
 
 export default ordersSlice.reducer;
