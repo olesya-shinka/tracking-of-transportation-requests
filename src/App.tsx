@@ -28,7 +28,6 @@ export interface Order {
 const App: React.FC = () => {
   const dispatch = useDispatch();
   const orders = useSelector((state: RootState) => state.orders);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>(orders);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
@@ -43,19 +42,46 @@ const App: React.FC = () => {
   const [openModalEdit, setOpenModalEdit] = useState<boolean>(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [hideCompleted, setHideCompleted] = useState<boolean>(false);
-
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>(orders);
+  const [filteredAndHiddenOrders, setFilteredAndHiddenOrders] =
+    useState<Order[]>(orders);
 
   useEffect(() => {
     const storedOrders = localStorage.getItem("ordersState");
     if (storedOrders) {
       dispatch(saveOrdersToLocalStorage(JSON.parse(storedOrders)));
     }
-  }, [dispatch]);
+    dispatch(saveOrdersToLocalStorage());
+    setFilteredAndHiddenOrders(orders);
+  }, [dispatch, orders]);
 
   useEffect(() => {
-    dispatch(saveOrdersToLocalStorage());
-    setFilteredOrders(orders);
-  }, [orders]);
+    let filtered = orders;
+    if (statusFilter) {
+      filtered = filtered.filter((order) => order.status === statusFilter);
+    }
+    if (hideCompleted) {
+      filtered = filtered.filter((order) => order.status !== "завершено");
+    }
+    setFilteredOrders(filtered);
+  }, [orders, statusFilter, hideCompleted]);
+
+  useEffect(() => {
+    let filtered = filteredOrders;
+    if (hideCompleted) {
+      filtered = filtered.filter((order) => order.status !== "завершено");
+    }
+    setFilteredAndHiddenOrders(filtered);
+  }, [filteredOrders, hideCompleted]);
+
+  const handleHideCompletedChange = () => {
+    setHideCompleted(!hideCompleted);
+    setFilteredAndHiddenOrders(
+      !hideCompleted
+        ? filteredOrders.filter((order) => order.status !== "завершено")
+        : filteredOrders
+    );
+  };
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
@@ -75,10 +101,26 @@ const App: React.FC = () => {
       ? orders.filter((order) => order.status === status)
       : orders;
     setFilteredOrders(filtered);
+    setFilteredAndHiddenOrders(
+      hideCompleted
+        ? filtered.filter((order) => order.status !== "завершено")
+        : filtered
+    );
   };
 
   const handleDelete = (id: number) => {
     dispatch(deleteOrder(id));
+
+    // Обновление состояния filteredOrders и filteredAndHiddenOrders после удаления заказа
+    const updatedFilteredOrders = filteredOrders.filter(
+      (order) => order.id !== id
+    );
+    setFilteredOrders(updatedFilteredOrders);
+
+    const updatedFilteredAndHiddenOrders = filteredAndHiddenOrders.filter(
+      (order) => order.id !== id
+    );
+    setFilteredAndHiddenOrders(updatedFilteredAndHiddenOrders);
   };
 
   const handleEdit = (editedOrder: Order) => {
@@ -99,7 +141,20 @@ const App: React.FC = () => {
     };
     dispatch(addOrder(orderToAdd));
     handleOpenModal();
-    setFilteredOrders([...filteredOrders, orderToAdd]);
+
+    const updatedFilteredOrders = [...filteredOrders, orderToAdd].filter(
+      (order) => {
+        if (hideCompleted) {
+          return order.status !== "завершено";
+        }
+        return true;
+      }
+    );
+    setFilteredOrders(updatedFilteredOrders);
+
+    const updatedFilteredAndHiddenOrders = [...updatedFilteredOrders];
+    setFilteredAndHiddenOrders(updatedFilteredAndHiddenOrders);
+
     setDate("");
     setCarrier("");
     setClient("");
@@ -155,10 +210,17 @@ const App: React.FC = () => {
             className="content-box-select"
           >
             <option value="">Все</option>
-            <option value="новая">Новый</option>
             <option value="в работе">В работе</option>
             <option value="завершено">Завершено</option>
           </select>
+          <label className="label-completed">
+            <input
+              type="checkbox"
+              checked={hideCompleted}
+              onChange={handleHideCompletedChange}
+            />
+            Скрыть завершенные заказы
+          </label>
           {isAdminMode && (
             <button className="content-box-btn" onClick={handleOpenModal}>
               Создать заказ
@@ -214,7 +276,7 @@ const App: React.FC = () => {
                     className="modal-input"
                     type="text"
                     name="status"
-                    value={status}
+                    defaultValue={status}
                     onChange={(e) => setStatus(e.target.value)}
                   />
                 </label>
@@ -264,8 +326,8 @@ const App: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map((order, id) => (
-              <tr key={order.id}>
+            {filteredAndHiddenOrders.map((order, id) => (
+              <tr key={id}>
                 <td>{order.id}</td>
                 <td>{order.date}</td>
                 <td>{order.client}</td>
